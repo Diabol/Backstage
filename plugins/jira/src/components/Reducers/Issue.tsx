@@ -21,12 +21,12 @@ type action = {
 
 // const initialState={title:"Jira Projects", project:{}, issue:{}};
 
-const issue = (state: {} = { issue: {} }, action: action) => {
+const issue = (state: {} = { issue: {index:0} }, action: action) => {
   switch (action.type) {
     case 'ADD_ISSUE':
       return { ...state, issue: action.object };
     case 'REMOVE_ISSUE':
-      return { ...state, issue: {} };
+      return { ...state, issue: {index:0} };
     default:
       return state;
   }

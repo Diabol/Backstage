@@ -29,7 +29,6 @@ import OverviewComponent from './OverviewComponent';
 import { Provider } from 'react-redux';
 import { createStore, Store, Action } from 'redux';
 import rootReducer from '../Reducers';
-// import store from '../Store';
 
 const store: Store<any, Action<any>> = createStore(rootReducer);
 

@@ -25,12 +25,13 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Alert from '@material-ui/lab/Alert';
 import { useAsync } from 'react-use';
-import { Progress } from '@backstage/core';
+import { Progress, InfoCard } from '@backstage/core';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import { useDispatch } from 'react-redux';
 import allActions from '../ActionsType';
+import {Project} from './Types';
 
 const useStyles = makeStyles({
   table: {
@@ -43,31 +44,7 @@ const useStyles = makeStyles({
   },
 });
 
-type avatarUrls = {
-  '48x48': string;
-  '24x24': string;
-  '16x16': string;
-  '32x32': String;
-};
 
-type Project = {
-  self: string;
-  id: string;
-  key: string;
-  description: string;
-  lead: {
-    self: string;
-    key: string;
-    name: string;
-    avatarUrls: avatarUrls;
-    displayName: string;
-    active: boolean;
-  };
-  name: string;
-  avatarUrls: avatarUrls;
-  projectKeys: string[];
-  projectTypeKey: string;
-};
 type ProjectsProps = {
   projects: Project[];
 };
@@ -77,61 +54,63 @@ const DenseTable: FC<ProjectsProps> = ({ projects }) => {
   const dispatch = useDispatch();
 
   return (
-    <TableContainer>
-      <Table className={classes.table} size="small" aria-label="a dense table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Avatar</TableCell>
-            <TableCell>Name</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Lead</TableCell>
-            <TableCell>Go to project</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {projects.map(project => (
-            <TableRow key={project.key}>
-              <TableCell>
-                <img
-                  src={project.avatarUrls['48x48']}
-                  className={classes.avatar}
-                  alt=""
-                />
-              </TableCell>
-              <TableCell>
-                <Link component={RouterLink} to="/home">
-                  {project.name}
-                </Link>
-              </TableCell>
-              <TableCell>{project.description}</TableCell>
-              <TableCell>
-                <img
-                  src={project.lead.avatarUrls['48x48']}
-                  className={classes.avatar}
-                  alt=""
-                />
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    dispatch(allActions.Actions.addTitle(project.key));
-                  }}
-                >
-                  Go to Project
-                </Button>
-              </TableCell>
+    <InfoCard title="Projects">
+      <TableContainer>
+        <Table className={classes.table} size="small" aria-label="a dense table">
+          <TableHead>
+            <TableRow>
+              <TableCell>Avatar</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Lead</TableCell>
+              <TableCell>Go to project</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {projects.map(project => (
+              <TableRow key={project.key}>
+                <TableCell>
+                  <img
+                    src={project.avatarUrls['48x48']}
+                    className={classes.avatar}
+                    alt=""
+                  />
+                </TableCell>
+                <TableCell>
+                  <Link component={RouterLink} to="/home">
+                    {project.name}
+                  </Link>
+                </TableCell>
+                <TableCell>{project.description}</TableCell>
+                <TableCell>
+                  <img
+                    src={project.lead.avatarUrls['48x48']}
+                    className={classes.avatar}
+                    alt=""
+                  />
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      dispatch(allActions.Actions.addProject(project));
+                    }}
+                  >
+                    Go to Project
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </InfoCard>
   );
 };
 
 const ProjectsComponent: FC<{}> = () => {
   const { value, loading, error } = useAsync(async (): Promise<Project[]> => {
-    const response = await fetch('http://localhost:3001/jira');
+    const response = await fetch('http://localhost:3001/projects');
     const data = await response.json();
     return data;
   }, []);
