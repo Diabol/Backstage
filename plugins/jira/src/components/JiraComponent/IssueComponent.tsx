@@ -18,22 +18,8 @@
 import React, { FC } from 'react';
 import {Theme,  makeStyles } from '@material-ui/core/styles';
 import { ExpansionPanel, ExpansionPanelSummary,ExpansionPanelDetails,Typography, Table, TableBody, TableCell, TableContainer, TableRow} from '@material-ui/core';
-// import {Table, TableBody, TableCell, TableContainer, TableRow} from '@material-ui/core';
 import {Issue} from './Types';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-
-/*
-const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
-  },
-  avatar: {
-    height: 32,
-    width: 32,
-    borderRadius: '50%',
-  },
-});
-*/
 
 const useStyles = makeStyles((theme:Theme) => ({
   root: {
@@ -51,13 +37,23 @@ const useStyles = makeStyles((theme:Theme) => ({
   }
 }));
 
+function getColor(input:string):string{
+  switch(input){
+    case('blue-gray'):
+      return 'Blue';
+    case('yellow'):
+      return 'Orange';
+    default:
+      return input;
+  }
+};
+
 type IssueProps = {
   issue: Issue;
 };
 
 const DenseTable: FC<IssueProps> = ({ issue }) => {
   const classes = useStyles();
-  // const dispatch = useDispatch();
   return (
   <div className={classes.root}>
     <ExpansionPanel>
@@ -85,7 +81,7 @@ const DenseTable: FC<IssueProps> = ({ issue }) => {
               Reporter:{` ${issue.fields.reporter.displayName}`}
             </TableCell>
             <TableCell>
-              Assignee:{` ${issue.fields.assignee}`}
+              Assignee:{(issue.fields.assignee) ?  ` ${issue.fields.assignee.displayName}` : 'No assignee'}
             </TableCell>
           </TableRow>
           <TableRow key="desc" className={classes.tableRow}>
@@ -94,11 +90,12 @@ const DenseTable: FC<IssueProps> = ({ issue }) => {
             </TableCell>
           </TableRow>
           <TableRow key="status" className={classes.tableRow}>
-            <TableCell>
-              Status:{` ${issue.fields.status.statusCategory}`}
+            <TableCell style={{backgroundColor:getColor(issue.fields.status.statusCategory.colorName) }}>
+              Status:{` ${issue.fields.status.name}`}
             </TableCell>
             <TableCell>
-              Priority:{` ${issue.fields.priotiry}`}
+              Priority:{` ${issue.fields.priority.name}`}
+              <img src={issue.fields.priority.iconUrl} alt='logo' style={{height:'17px',width:'17px' }} />
             </TableCell>
           </TableRow>
           <TableRow key="created" className={classes.tableRow}>
@@ -114,20 +111,6 @@ const DenseTable: FC<IssueProps> = ({ issue }) => {
     </TableContainer>
     </ExpansionPanelDetails>
     </ExpansionPanel>
-    {
-      /*
-    <TableContainer>
-      <Table className={classes.table} size="small" aria-label="a dense table">
-        <TableBody>
-            <TableRow key={issue.key}>
-              <TableCell>
-                hjhjh
-              </TableCell>
-            </TableRow>
-        </TableBody>
-      </Table>
-    </TableContainer>*/
-}
   </div>
   );
 };

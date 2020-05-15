@@ -16,20 +16,27 @@
 
 type action = {
   type: string;
-  object: {};
+  search:Object;
 };
 
 // const initialState={title:"Jira Projects", project:{}, issue:{}};
 
-const issue = (state: {} = { }, action: action) => {
+const issues = (state:{index:number,search:{name:string,status:string}} = {index:0,search:{name:'',status:''} } , action: action) => {
   switch (action.type) {
-    case 'ADD_ISSUE':
-      return { ...state, issue: action.object };
-    case 'REMOVE_ISSUE':
-      return { ...state, issue: {} };
+    case 'INCREMENT_INDEX':
+      return { ...state, index: state.index+20 };
+    case 'DECREMENT_INDEX':
+      if(state.index <=20) return { ...state, index: 0 };
+      return { ...state, index: state.index-20 };
+    case 'CLEAR_INDEX':
+      return { ...state, index: 0 };
+    case 'SET_SEARCH':
+      return { ...state, search:action.search, index:0 };
+    case 'CLEAR_SEARCH':
+      return { ...state, search:{name:'',status:''} };
     default:
       return state;
   }
 };
 
-export default issue;
+export default issues;

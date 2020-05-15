@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import {Table,TableBody,TableCell,TableContainer,TableRow, Button} from '@material-ui/core';
+import {Table,TableBody,TableCell,TableContainer,TableRow, Button, Select, InputLabel, FormControl, MenuItem} from '@material-ui/core';
 import Alert from '@material-ui/lab/Alert';
 import { useAsync } from 'react-use';
 import { Progress } from '@backstage/core';
 import IssueComponent from './IssueComponent';
-import {Issue} from './Types';
+import {Issue, User, Status} from './Types';
 import { TypedUseSelectorHook, useSelector, useDispatch } from 'react-redux';
 import allActions from '../ActionsType';
 
@@ -42,23 +42,33 @@ const useStyles = makeStyles({
   },
 });
 
-
 type IssuesProps = {
   total: number;
   issues: Issue[];
+  users: User[];
+  statuses:Status[];
 };
 
 type State = {
-  issue:{ issue:{index:number}}
+  issues:{index:number,search:{name:string,status:string}};
 };
 
-const DenseTable: FC<IssuesProps> = ({ issues }) => {
+const DenseTable: FC<IssuesProps> = ({ issues, users, statuses }) => {
   const classes = useStyles();
   const dispatch = useDispatch();
   const typedUseSelector: TypedUseSelectorHook<State> = useSelector;
-  const index = typedUseSelector(state => state.issue.issue.index);
-  // eslint-disable-next-line no-console
-  // console.log(indexff)
+  const index = typedUseSelector(state => state.issues.index);
+  const search = typedUseSelector(state => state.issues.search);
+
+  const [name, setName] = useState(search.name);
+  const [status, setStatus] = useState(search.status);
+  const handleStatusChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setStatus(event.target.value as string);
+  };
+  const handleNameChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setName(event.target.value as string);
+  };
+  
 
   return (
     <div>
@@ -71,6 +81,7 @@ const DenseTable: FC<IssuesProps> = ({ issues }) => {
                   onClick={() => {
                     dispatch(allActions.Actions.removeProject());
                     dispatch(allActions.Actions.removeIssue());
+                    dispatch(allActions.Actions.clearIssuesIndex());
                   }}>
                   Back to projects
                 </Button>
@@ -78,18 +89,68 @@ const DenseTable: FC<IssuesProps> = ({ issues }) => {
             </TableRow>
             <TableRow>
               <TableCell>
-                <label>index:{index}</label>
+                <FormControl variant="filled"  margin='dense' >
+                  <InputLabel id="name-dropdown" >Assignee</InputLabel>
+                  <Select
+                    labelId="name-dropdown"
+                    id="name-dropdown-filled"
+                    value={name}
+                    onChange={handleNameChange}
+                    autoWidth
+                    MenuProps={{ style: {maxHeight: 500, minWidth:150} }}
+                    style={{minWidth:120}}
+                  >
+                    <MenuItem value="" key='None'>
+                      <em>None</em>
+                    </MenuItem>
+                    {users.map((user)=> (
+                      <MenuItem value={user.key} key={user.key} >{`${user.displayName} ${user.emailAddress}`}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl variant="filled" margin='dense' > 
+                  <InputLabel id="status-dropdown" >Status</InputLabel>
+                  <Select
+                    labelId="status-dropdown"
+                    id="status-dropdown-filled"
+                    value={status}
+                    onChange={handleStatusChange}
+                    autoWidth
+                    MenuProps={{ style: {maxHeight: 500, minWidth:100} }}
+                    style={{minWidth:'100px'}}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    {
+                      statuses.map((element)=>(
+                      <MenuItem value={element.name} key={element.name}>{element.name}</MenuItem>
+                      ))
+                    }
+                  </Select>
+                </FormControl>
+                <Button variant="contained" className={classes.button}
+                  onClick={() => {
+                      dispatch(allActions.Actions.setIssuesSearch({name:name.trim(),status:status.trim()}));
+                      // TODO: send filter queries to api
+                    // eslint-disable-next-line no-console
+                    console.log("bla",{status, name})
+                  }}>
+                  Search
+                </Button>
+              </TableCell>
+              <TableCell>
                 {index > 0 && 
                 <Button variant="contained" className={classes.button}
                   onClick={() => {
-                    dispatch(allActions.Actions.addIssue({index:index-1}));
+                    dispatch(allActions.Actions.decrementIssuesIndex());
                   }}>
                   Previous
                 </Button>
                 }
                 <Button variant="contained" className={classes.button}
                 onClick={() => {
-                  dispatch(allActions.Actions.addIssue({index:index+1}));
+                  dispatch(allActions.Actions.incrementIssuesIndex());
                 }}>
                 Next
                 </Button>
@@ -119,20 +180,25 @@ const DenseTable: FC<IssuesProps> = ({ issues }) => {
 const IssuesComponent: FC<{ projectKey:string}> = ({projectKey}) => {
 
   const typedUseSelector: TypedUseSelectorHook<State> = useSelector;
-  const index = typedUseSelector(state => state.issue.issue.index);
+  const index = typedUseSelector(state => state.issues.index);
+  const search = typedUseSelector(state => state.issues.search);
 
-  // eslint-disable-next-line no-console
-  console.log("rerender",index);
-
-  // add som kind of caching for project data.
-  // TODO: async not called on re-render...
-  // Possible solution: https://dev.to/n1ru4l/homebrew-react-hooks-useasynceffect-or-how-to-handle-async-operations-with-useeffect-1fa8
+  // add som kind of caching for project data?
   const { value, loading, error } = useAsync(async (): Promise<IssuesProps> => {
+    const name = search.name !== '' ? `&name=${search.name}` : ''; 
+    const status = search.status !== '' ? `&status=${search.status}` : '';
 
-    const response = await fetch(`http://localhost:3001/issues/${projectKey}?index=${index}`);
-    const data = await response.json();
-    return data;
-  }, []);
+    const issues = await fetch(`http://localhost:3001/issues/${projectKey}?index=${index}${name}${status}`);
+    const issuesData = await issues.json();
+
+    const users = await fetch(`http://localhost:3001/users`);
+    const usersData = await users.json();
+
+    const statuses = await fetch(`http://localhost:3001/statuses`);
+    const statusesData = await statuses.json();
+
+    return {total:issuesData.total, issues:issuesData.issues, users:usersData, statuses:statusesData} as IssuesProps;
+  }, [index,search]);
 
   if (loading) {
     return <Progress />;
@@ -141,13 +207,10 @@ const IssuesComponent: FC<{ projectKey:string}> = ({projectKey}) => {
   }
   
   if(!value) {
-    return <DenseTable issues={[]} total={0} />;
+    return <DenseTable issues={[]} total={0} users={[]} statuses={[]}/>;
   }
 
-  // eslint-disable-next-line no-console
-  console.log("rerender",index,value);
-
-  return <DenseTable issues={value.issues || []} total={value.total || 0 } />;
+  return <DenseTable issues={value.issues || []} total={value.total || 0 } users={value.users || []} statuses={value.statuses || []} />;
 };
 
 

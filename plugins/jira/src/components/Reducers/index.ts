@@ -16,6 +16,7 @@
 
 import project from './Project';
 import issue from './Issue';
+import issues from './Issues';
 import title from './Title';
 import { combineReducers } from 'redux';
 
@@ -23,6 +24,7 @@ const rootReducer = combineReducers({
   title,
   project,
   issue,
+  issues
 });
 
 export default rootReducer;

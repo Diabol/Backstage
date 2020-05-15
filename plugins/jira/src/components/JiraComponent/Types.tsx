@@ -28,20 +28,18 @@ export interface Issue {
     key: string;
     fields: {
       created:string;
-      priotiry:{
+      priority:{
         name:string;
         iconUrl:string;
       };
       labels:string[];
-      assignee:string;
-      updated:string;
-      status:{
-        description:string;
-        iconUrl:string;
-        statusCategory:{
-          name:string;
-        };
+      assignee:{
+        name:string;
+        displayName:string;
+        avatarUrls:avatarUrls;
       };
+      updated:string;
+      status:Status;
       components:string[];
       description:string;
       summary:string;
@@ -81,5 +79,29 @@ export interface Issue {
     avatarUrls: avatarUrls;
     projectKeys: string[];
     projectTypeKey: string;
+  };
+
+  export interface User {
+    self:string;
+    key:string;
+    name:string;
+    emailAddress:string;
+    avatarUrls:avatarUrls;
+    displayName:string;
+  };
+
+  export interface Status {
+    self:string;
+    id:number;
+    description:string;
+    iconUrl:string;
+    name:string;
+    statusCategory:{
+      self:string;
+      id:number;
+      key:string;
+      colorName:string;
+      name:string;
+    };
   };
 
