@@ -15,43 +15,23 @@
  * limitations under the License.
  */
 
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import ProjectsComponent from './ProjectsComponent';
-import { InfoCard } from '@backstage/core';
-import { TypedUseSelectorHook, useSelector, useDispatch } from 'react-redux';
-import allActions from '../ActionsType';
-//  import { makeStyles } from '@material-ui/core/styles';
+import { TypedUseSelectorHook, useSelector } from 'react-redux';
+import {Project} from './Types';
+import IssuesComponent from './IssuesComponent';
 
-/*
-const useStyles = makeStyles({
-    table: {
-      minWidth: 650,
-    },
-    avatar: {
-      height: 32,
-      width: 32,
-      borderRadius: '50%',
-    },
-  });
-*/
-
-type State = { title: { title: string } };
+type State = { project: {project:Project} };
 
 const OverviewComponent: FC<{}> = () => {
-  //  const classes = useStyles();
   const typedUseSelector: TypedUseSelectorHook<State> = useSelector;
-  const title = typedUseSelector(state => state.title);
-
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(allActions.Actions.addTitle('Jira projects!!'));
-  }, []);
+  const project = typedUseSelector(state => state.project.project);
 
   return (
-    <InfoCard title={title.title}>
-      {title.title !== 'NAU' && <ProjectsComponent />}
-    </InfoCard>
+    <div>
+      {Object.keys(project).length ===0 && <ProjectsComponent />}
+      {Object.keys(project).length !==0 && <IssuesComponent projectKey={project.key} />}
+    </div>
   );
 };
 

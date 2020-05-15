@@ -29,11 +29,30 @@ const addProject = (input: {}) => {
 const removeProject = () => {
   return { type: 'REMOVE_PROJECT' };
 };
-
+const incrementIssuesIndex = () => {
+  return { type: 'INCREMENT_INDEX' };
+};
+const decrementIssuesIndex = () => {
+  return { type: 'DECREMENT_INDEX' };
+};
+const clearIssuesIndex = () => {
+  return { type: 'CLEAR_INDEX' };
+};
+const setIssuesSearch = (search:{name:string,status:string}) => {
+  return { type: 'SET_SEARCH', search:search };
+};
+const clearIssuesSearch = () => {
+  return { type: 'CLEAR_SEARCH' };
+};
 export default {
   addTitle,
   addIssue,
   removeIssue,
   addProject,
   removeProject,
+  incrementIssuesIndex,
+  decrementIssuesIndex,
+  clearIssuesIndex,
+  setIssuesSearch,
+  clearIssuesSearch
 };
