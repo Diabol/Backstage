@@ -25,7 +25,7 @@ import IssueComponent from './IssueComponent';
 import {Issue, User, Status} from './Types';
 import { TypedUseSelectorHook, useSelector, useDispatch } from 'react-redux';
 import allActions from '../ActionsType';
-
+import { KeycloakInstance } from 'keycloak-js';
 
 
 const useStyles = makeStyles({
@@ -51,6 +51,7 @@ type IssuesProps = {
 
 type State = {
   issues:{index:number,search:{name:string,status:string}};
+  auth:{keycloakClient:KeycloakInstance};
 };
 
 const DenseTable: FC<IssuesProps> = ({ issues, users, statuses }) => {
@@ -182,23 +183,32 @@ const IssuesComponent: FC<{ projectKey:string}> = ({projectKey}) => {
   const typedUseSelector: TypedUseSelectorHook<State> = useSelector;
   const index = typedUseSelector(state => state.issues.index);
   const search = typedUseSelector(state => state.issues.search);
-
+  const kc = typedUseSelector(state => state.auth.keycloakClient);
+  
   // add som kind of caching for project data?
   const { value, loading, error } = useAsync(async (): Promise<IssuesProps> => {
     const name = search.name !== '' ? `&name=${search.name}` : ''; 
     const status = search.status !== '' ? `&status=${search.status}` : '';
+    const token = kc.token;
+    
+    const options = {
+      method:"get",
+      ...(kc && token && token !== "" && {headers: {
+        "Authorization": `Bearer ${token}`
+      }})
+    };
 
-    const issues = await fetch(`http://localhost:3001/issues/${projectKey}?index=${index}${name}${status}`);
+    const issues = await fetch(`http://localhost:3001/issues/${projectKey}?index=${index}${name}${status}`,options);
     const issuesData = await issues.json();
 
-    const users = await fetch(`http://localhost:3001/users`);
+    const users = await fetch(`http://localhost:3001/users`,options);
     const usersData = await users.json();
 
-    const statuses = await fetch(`http://localhost:3001/statuses`);
+    const statuses = await fetch(`http://localhost:3001/statuses`,options);
     const statusesData = await statuses.json();
 
     return {total:issuesData.total, issues:issuesData.issues, users:usersData, statuses:statusesData} as IssuesProps;
-  }, [index,search]);
+  }, [index,search,kc]);
 
   if (loading) {
     return <Progress />;

@@ -15,24 +15,71 @@
  * limitations under the License.
  */
 
-import React, { FC } from 'react';
+import React, { FC, useState, useEffect } from 'react';
 import ProjectsComponent from './ProjectsComponent';
-import { TypedUseSelectorHook, useSelector } from 'react-redux';
+import { TypedUseSelectorHook, useSelector, useDispatch } from 'react-redux';
 import {Project} from './Types';
 import IssuesComponent from './IssuesComponent';
+import Keycloak, {KeycloakConfig, KeycloakInstance} from 'keycloak-js';
+import {Button} from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
+import allActions from '../ActionsType';
 
-type State = { project: {project:Project} };
+type State = { project: {project:Project}, auth: {token:string } };
+
+const useStyles = makeStyles({
+  button:{
+    margin:"10px",
+    marginLeft:"auto",
+    display: "flex"
+  }
+});
 
 const OverviewComponent: FC<{}> = () => {
+  const classes = useStyles();
   const typedUseSelector: TypedUseSelectorHook<State> = useSelector;
   const project = typedUseSelector(state => state.project.project);
+  const token = typedUseSelector(state => state.auth.token);
+  const dispatch = useDispatch();
 
-  return (
+  const config:KeycloakConfig = 
+    {
+      "realm": process.env.KEYCLOAK_REALM || "admin",
+      "url": process.env.KEYCLOAK_AUTH_URL || "http://localhost:8080/auth/",
+      "clientId": process.env.KEYCLOAK_CLIENT_ID || "my-react-client"
+    };
+
+  const [authenticated, setAuthenticated] = useState(false);
+  // eslint-disable-next-line new-cap 
+  const [keycloak, setKeycloak] = useState<KeycloakInstance>();
+    
+  useEffect(() => {
+    // eslint-disable-next-line new-cap
+    const kc = Keycloak(config);
+    kc.init({onLoad: 'login-required'})
+    .then((auth:boolean) => { 
+      setAuthenticated(auth);
+      dispatch(allActions.Actions.setKeycloakClient(kc));
+    });
+    kc.onTokenExpired = () => kc.updateToken(20);
+    kc.onAuthRefreshError = () => kc.logout();
+    
+    setKeycloak(kc);
+  },[]);
+
+  if(keycloak && authenticated && keycloak.token){
+     return (
     <div>
+      <Button variant="contained" className={classes.button} onClick={() => {
+        keycloak.logout();
+        }}>
+        Logout
+      </Button>
       {Object.keys(project).length ===0 && <ProjectsComponent />}
       {Object.keys(project).length !==0 && <IssuesComponent projectKey={project.key} />}
-    </div>
-  );
+    </div>);
+  }
+  return <div>`Initializing Keycloak...   ${token}`</div>;
 };
 
 export default OverviewComponent;

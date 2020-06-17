@@ -29,9 +29,10 @@ import { Progress, InfoCard } from '@backstage/core';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
-import { useDispatch } from 'react-redux';
+import { TypedUseSelectorHook, useSelector, useDispatch } from 'react-redux';
 import allActions from '../ActionsType';
 import {Project} from './Types';
+import { KeycloakInstance } from 'keycloak-js';
 
 const useStyles = makeStyles({
   table: {
@@ -52,6 +53,8 @@ type ProjectsProps = {
 const DenseTable: FC<ProjectsProps> = ({ projects }) => {
   const classes = useStyles();
   const dispatch = useDispatch();
+
+  if (projects ===[] ) return (<div>No projects available!</div>);
 
   return (
     <InfoCard title="Projects">
@@ -108,12 +111,27 @@ const DenseTable: FC<ProjectsProps> = ({ projects }) => {
   );
 };
 
+type State = {
+  auth:{keycloakClient: KeycloakInstance };
+};
+
 const ProjectsComponent: FC<{}> = () => {
+  const typedUseSelector: TypedUseSelectorHook<State> = useSelector;
+  const kc = typedUseSelector(state => state.auth.keycloakClient);
+  
   const { value, loading, error } = useAsync(async (): Promise<Project[]> => {
-    const response = await fetch('http://localhost:3001/projects');
+    const token = kc.token;
+    const options = {
+      method:"get",
+      ...(kc && token && token !== "" && {headers: {
+        "Authorization": `Bearer ${token}`
+      }})
+    };
+
+    const response = await fetch('http://localhost:3001/projects', options);
     const data = await response.json();
     return data;
-  }, []);
+  }, [kc]);
 
   if (loading) {
     return <Progress />;

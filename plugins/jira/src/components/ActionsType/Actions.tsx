@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import {KeycloakInstance} from 'keycloak-js';
+
 const addTitle = (input: string) => {
   return { type: 'ADD_TITLE', text: input };
 };
@@ -44,6 +46,12 @@ const setIssuesSearch = (search:{name:string,status:string}) => {
 const clearIssuesSearch = () => {
   return { type: 'CLEAR_SEARCH' };
 };
+const setKeycloakClient = (kc: KeycloakInstance) => {
+  return { type: 'SET_KC', keycloakClient: kc };
+};
+const clearKeycloakClient = () => {
+  return { type: 'CLEAR_KC' };
+};
 export default {
   addTitle,
   addIssue,
@@ -54,5 +62,7 @@ export default {
   decrementIssuesIndex,
   clearIssuesIndex,
   setIssuesSearch,
-  clearIssuesSearch
+  clearIssuesSearch,
+  setKeycloakClient,
+  clearKeycloakClient
 };
