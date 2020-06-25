@@ -44,9 +44,9 @@ const JiraComponent: FC<{}> = () => (
       </ContentHeader>
       <Grid container spacing={3} direction="column">
         <Grid item>
-          <Provider store={store}>
-            <OverviewComponent />
-          </Provider>
+            <Provider store={store}>
+              <OverviewComponent />
+            </Provider>
         </Grid>
       </Grid>
     </Content>

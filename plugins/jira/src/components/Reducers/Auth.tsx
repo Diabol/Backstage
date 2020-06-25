@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-import project from './Project';
-import issue from './Issue';
-import issues from './Issues';
-import title from './Title';
-import auth from './Auth';
-import { combineReducers } from 'redux';
+import {KeycloakInstance} from 'keycloak-js';
 
-const rootReducer = combineReducers({
-  title,
-  project,
-  issue,
-  issues,
-  auth
-});
-
-export default rootReducer;
+type action = {
+    type: string;
+    keycloakClient: KeycloakInstance;
+  };
+  
+const auth = (state: {} = { keycloakClient:null }, action: action) => {
+switch (action.type) {
+    case 'SET_KC':
+      return { keycloakClient: action.keycloakClient };
+    case 'CLEAR_KC':
+      return { keycloakClient: null };
+    default:
+      return state;
+}
+};
+  
+export default auth;
