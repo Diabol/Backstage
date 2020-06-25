@@ -31,7 +31,7 @@ import { Link } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import { TypedUseSelectorHook, useSelector, useDispatch } from 'react-redux';
 import allActions from '../ActionsType';
-import {Project} from './Types';
+import { Project } from './Types';
 import { KeycloakInstance } from 'keycloak-js';
 
 const useStyles = makeStyles({
@@ -45,7 +45,6 @@ const useStyles = makeStyles({
   },
 });
 
-
 type ProjectsProps = {
   projects: Project[];
 };
@@ -54,12 +53,16 @@ const DenseTable: FC<ProjectsProps> = ({ projects }) => {
   const classes = useStyles();
   const dispatch = useDispatch();
 
-  if (projects ===[] ) return (<div>No projects available!</div>);
+  if (projects === []) return <div>No projects available!</div>;
 
   return (
     <InfoCard title="Projects">
       <TableContainer>
-        <Table className={classes.table} size="small" aria-label="a dense table">
+        <Table
+          className={classes.table}
+          size="small"
+          aria-label="a dense table"
+        >
           <TableHead>
             <TableRow>
               <TableCell>Avatar</TableCell>
@@ -112,23 +115,30 @@ const DenseTable: FC<ProjectsProps> = ({ projects }) => {
 };
 
 type State = {
-  auth:{keycloakClient: KeycloakInstance };
+  auth: { keycloakClient: KeycloakInstance };
 };
 
 const ProjectsComponent: FC<{}> = () => {
   const typedUseSelector: TypedUseSelectorHook<State> = useSelector;
   const kc = typedUseSelector(state => state.auth.keycloakClient);
-  
+
   const { value, loading, error } = useAsync(async (): Promise<Project[]> => {
     const token = kc.token;
     const options = {
-      method:"get",
-      ...(kc && token && token !== "" && {headers: {
-        "Authorization": `Bearer ${token}`
-      }})
+      method: 'get',
+      ...(kc &&
+        token &&
+        token !== '' && {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
     };
-
-    const response = await fetch('http://localhost:3001/projects', options);
+    const url =
+      process.env.NODE_ENV !== 'development'
+        ? 'https://backstage-api.thibaut.lab.diabol.dev'
+        : 'http://localhost:3001';
+    const response = await fetch(`${url}/projects`, options);
     const data = await response.json();
     return data;
   }, [kc]);

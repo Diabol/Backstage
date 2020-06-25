@@ -18,21 +18,21 @@
 import React, { FC, useState, useEffect } from 'react';
 import ProjectsComponent from './ProjectsComponent';
 import { TypedUseSelectorHook, useSelector, useDispatch } from 'react-redux';
-import {Project} from './Types';
+import { Project } from './Types';
 import IssuesComponent from './IssuesComponent';
-import Keycloak, {KeycloakConfig, KeycloakInstance} from 'keycloak-js';
-import {Button} from '@material-ui/core';
+import Keycloak, { KeycloakConfig, KeycloakInstance } from 'keycloak-js';
+import { Button } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import allActions from '../ActionsType';
 
-type State = { project: {project:Project}, auth: {token:string } };
+type State = { project: { project: Project }; auth: { token: string } };
 
 const useStyles = makeStyles({
-  button:{
-    margin:"10px",
-    marginLeft:"auto",
-    display: "flex"
-  }
+  button: {
+    margin: '10px',
+    marginLeft: 'auto',
+    display: 'flex',
+  },
 });
 
 const OverviewComponent: FC<{}> = () => {
@@ -42,44 +42,52 @@ const OverviewComponent: FC<{}> = () => {
   const token = typedUseSelector(state => state.auth.token);
   const dispatch = useDispatch();
 
-  const config:KeycloakConfig = 
-    {
-      "realm": process.env.KEYCLOAK_REALM || "admin",
-      "url": process.env.KEYCLOAK_AUTH_URL || "http://localhost:8080/auth/",
-      "clientId": process.env.KEYCLOAK_CLIENT_ID || "my-react-client"
-    };
+  const prod = process.env.NODE_ENV !== 'development';
+  const config: KeycloakConfig = {
+    realm: prod ? 'myrealm' : 'admin',
+    url: prod
+      ? 'https://keycloak.thibaut.lab.diabol.dev/auth'
+      : 'http://localhost:8080/auth/',
+    clientId: prod ? 'backstage-dashboard' : 'my-react-client',
+  };
 
   const [authenticated, setAuthenticated] = useState(false);
-  // eslint-disable-next-line new-cap 
+  // eslint-disable-next-line new-cap
   const [keycloak, setKeycloak] = useState<KeycloakInstance>();
-    
+
   useEffect(() => {
     // eslint-disable-next-line new-cap
     const kc = Keycloak(config);
-    kc.init({onLoad: 'login-required'})
-    .then((auth:boolean) => { 
+    kc.init({ onLoad: 'login-required' }).then((auth: boolean) => {
       setAuthenticated(auth);
       dispatch(allActions.Actions.setKeycloakClient(kc));
     });
     kc.onTokenExpired = () => kc.updateToken(20);
     kc.onAuthRefreshError = () => kc.logout();
-    
-    setKeycloak(kc);
-  },[]);
 
-  if(keycloak && authenticated && keycloak.token){
-     return (
-    <div>
-      <Button variant="contained" className={classes.button} onClick={() => {
-        keycloak.logout();
-        }}>
-        Logout
-      </Button>
-      {Object.keys(project).length ===0 && <ProjectsComponent />}
-      {Object.keys(project).length !==0 && <IssuesComponent projectKey={project.key} />}
-    </div>);
+    setKeycloak(kc);
+  }, []);
+
+  if (keycloak && authenticated && keycloak.token) {
+    return (
+      <div>
+        <Button
+          variant="contained"
+          className={classes.button}
+          onClick={() => {
+            keycloak.logout();
+          }}
+        >
+          Logout
+        </Button>
+        {Object.keys(project).length === 0 && <ProjectsComponent />}
+        {Object.keys(project).length !== 0 && (
+          <IssuesComponent projectKey={project.key} />
+        )}
+      </div>
+    );
   }
-  return <div>`Initializing Keycloak...   ${token}`</div>;
+  return <div>`Initializing Keycloak... ${token}`</div>;
 };
 
 export default OverviewComponent;
